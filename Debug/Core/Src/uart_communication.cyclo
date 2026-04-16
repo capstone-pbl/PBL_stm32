@@ -1,8 +1,0 @@
-../Core/Src/uart_communication.cpp:12:1:uart_comm::uart_comm(UART_HandleTypeDef*)	1
-../Core/Src/uart_communication.cpp:18:6:void uart_comm::begin_uart()	1
-../Core/Src/uart_communication.cpp:25:6:void uart_comm::handle_rx()	4
-../Core/Src/uart_communication.cpp:40:7:float uart_comm::get_cx() const	1
-../Core/Src/uart_communication.cpp:45:7:float uart_comm::get_cy() const	1
-../Core/Src/uart_communication.cpp:50:6:bool uart_comm::get_isready() const	1
-../Core/Src/uart_communication.cpp:56:6:void uart_comm::reset_isready()	1
-../Core/Src/uart_communication.cpp:61:17:void HAL_UART_RxCpltCallback(UART_HandleTypeDef*)	3
