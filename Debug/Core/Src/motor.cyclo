@@ -1,0 +1,6 @@
+../Core/Src/motor.cpp:10:3:run_motor::run_motor(TIM_HandleTypeDef*, uint32_t)	2
+../Core/Src/motor.cpp:18:13:uint32_t run_motor::get_duty(uint32_t)	4
+../Core/Src/motor.cpp:23:9:void run_motor::emergency_stop()	1
+../Core/Src/motor.cpp:31:9:void run_motor::test_motor_L()	1
+../Core/Src/motor.cpp:44:8:void run_motor::test_motor_R()	1
+../Core/Src/motor.cpp:58:8:void run_motor::set_duty(uint32_t, uint32_t)	5
