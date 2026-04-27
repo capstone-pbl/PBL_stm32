@@ -125,7 +125,10 @@ int main(void) {
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
-		if (esp32_uart.get_isready()) {
+		motor.test_motor_L();
+		if (esp32_uart.get_isready())
+		{
+			esp32_uart.handle_rx();
 			curx = esp32_uart.get_cx();
 			cury = esp32_uart.get_cy();
 

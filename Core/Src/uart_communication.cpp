@@ -15,6 +15,7 @@ uart_comm::uart_comm(UART_HandleTypeDef *handler) :
 	this->huart = handler;
 	instance = this;
 }
+
 void uart_comm::begin_uart()
 {
 
@@ -37,6 +38,7 @@ void uart_comm::handle_rx()
 	begin_uart();
 }
 
+
 float uart_comm::get_cx() const
 {
 	return this->cx;
@@ -58,6 +60,7 @@ void uart_comm::reset_isready()
 	this->is_ready=false;
 
 }
+
 extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if (huart->Instance == USART6)

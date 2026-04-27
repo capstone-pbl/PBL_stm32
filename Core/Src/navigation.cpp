@@ -9,7 +9,7 @@
 //속도 계산->주행 알고리즘
 
 Pure_pursuit::Pure_pursuit(TIM_HandleTypeDef *htim_encL,TIM_HandleTypeDef *htim_encR,delta_value &dv)
-:L(0.15f),v(0.5f),ld(0.3f),kp(0.1),ki(0.1),kd(0.1)
+:L(0.15f),v(0.5f),ld(0.3f),kp(0.0),ki(0.0),kd(0.0)
 //L:좌우 바퀴 간격  v:로봇 기본속도(m/s)  ld:lookahead distance
 {
  this->htim_encL=htim_encL;
@@ -80,6 +80,7 @@ float Pure_pursuit::get_dist_L(void)
  // delta/PPR = 몇바퀴 돌았는지, 반지름이 0.05f이므로 2pi*delta/PPR = 이번 주기 이동거리
 }
 
+
 float Pure_pursuit::get_dist_R(void)
 {
 	 uint16_t curr = __HAL_TIM_GET_COUNTER(htim_encR);
@@ -87,6 +88,7 @@ float Pure_pursuit::get_dist_R(void)
 	 prevR=curr;
 	 return ((float)delta/PPR)*(2.0f*M_PI*0.05f);
 }
+
 
 
 float Pure_pursuit::update_pid(PID_error & state,float target,float current)
