@@ -10,7 +10,7 @@
   run_motor::run_motor(TIM_HandleTypeDef *htim,uint32_t duty)
    {
       this->htim = htim;
-	  this->duty = (duty <=500) ? duty : 500;
+	  this->duty = (duty <=1200) ? duty : 1200;
    }
 
 
@@ -55,7 +55,6 @@
    HAL_TIM_PWM_Stop(this->htim,TIM_CHANNEL_1);
    HAL_TIM_PWM_Stop(this->htim,TIM_CHANNEL_2);
 
-
    }
 
   void run_motor::test_motor_R()
@@ -92,9 +91,10 @@
    }
 
   void run_motor::set_duty(uint32_t ch, uint32_t duty) {
-      if(duty > 500)duty=500;
+      if(duty > 1200)duty=1200;
 	  this->duty = duty;
 
       __HAL_TIM_SET_COMPARE(this->htim, ch, duty);
   }
+
 

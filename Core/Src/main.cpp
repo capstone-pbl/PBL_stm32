@@ -23,13 +23,15 @@
 #include "navigation.hpp"
 #include "actuator.hpp"
 #include "algorithm"
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
+
+
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
@@ -51,13 +53,18 @@ UART_HandleTypeDef huart6;
 
 /* USER CODE BEGIN PV */
 delta_value dv = { 0 };
-run_motor motor(&htim1, 500);
+run_motor motor(&htim1, 1200);
 Pure_pursuit pp(&htim3, &htim4, dv);
 uart_comm esp32_uart(&huart6);
 float curx = 0.0f, cury = 0.0f;
 float tx = 1.0f, ty = 0.0f;
 float dt = 0.01f;
-
+volatile unsigned long cnt1=0;
+volatile unsigned long cnt2=0;
+volatile float cur_vL = 0.0f;
+volatile float cur_vR = 0.0f;
+volatile float pid_outL = 0.0f;
+volatile float pid_outR = 0.0f;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -81,11 +88,12 @@ uint8_t rx_buf[64];
  * @brief  The application entry point.
  * @retval int
  */
-int main(void) {
+
+int main(void)
+{
 
 	/* USER CODE BEGIN 1 */
-
-	/* USER CODE END 1 */
+    /* USER CODE END 1 */
 
 	/* MCU Configuration--------------------------------------------------------*/
 
@@ -120,12 +128,20 @@ int main(void) {
 	HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
 
 	esp32_uart.begin_uart();
+	pp.set_pid_gain(19, 37, 0.18);
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
-	while (1) {
-		motor.test_motor_L();
+//	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0); // L-PWM
+//	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 500);
+//	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0); // R-PWM
+//	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 500);
+
+	while (1)
+	{
+		HAL_Delay(10);
+
 		if (esp32_uart.get_isready())
 		{
 			esp32_uart.handle_rx();
@@ -134,14 +150,17 @@ int main(void) {
 
 			esp32_uart.reset_isready();
 		}
+
 		pp.set_delta(dv);
 		pp.Odometry(dv);
 		float dist = sqrtf(
 				(tx - curx) * (tx - curx) + (ty - cury) * (ty - cury));
-		if (dist < 0.1f) {
+		if (dist < 0.1f)
+		{
 			motor.emergency_stop();
 
-		} else {
+		}
+		else {
 
 			float alpha = pp.get_alpha(curx, cury, tx, ty);
 			WheelSpeed ws = pp.calculate(curx, cury, tx, ty, alpha);
@@ -149,27 +168,63 @@ int main(void) {
 			float cur_vL = dv.delta_encL / 0.01f;
 			float cur_vR = dv.delta_encR / 0.01f;
 
-			float pid_outL = pp.update_pid(pp.get_L_error(), ws.left, cur_vL);
-			float pid_outR = pp.update_pid(pp.get_R_error(), ws.right, cur_vR);
+			volatile float pid_outL = pp.update_pid(pp.get_L_error(), ws.left, cur_vL);
+			volatile float pid_outR = pp.update_pid(pp.get_R_error(), ws.right, cur_vR);
 
-			if (pid_outL >= 0) {
+			if (pid_outL >= 0)
+			{
 				motor.set_duty(TIM_CHANNEL_1, (uint32_t) (pid_outL));
 				motor.set_duty(TIM_CHANNEL_2, 0);
-			} else {
+			}
+			else
+			{
 				motor.set_duty(TIM_CHANNEL_1, 0);
 				motor.set_duty(TIM_CHANNEL_2, (uint32_t) (-pid_outL));
 			}
 
 			// 오른쪽 모터
-			if (pid_outR >= 0) {
+			if (pid_outR >= 0)
+			{
 				motor.set_duty(TIM_CHANNEL_3, (uint32_t) (pid_outR));
 				motor.set_duty(TIM_CHANNEL_4, 0);
-			} else {
+			} else
+			{
 				motor.set_duty(TIM_CHANNEL_3, 0);
 				motor.set_duty(TIM_CHANNEL_4, (uint32_t) (-pid_outR));
 			}
+
 		}
-		HAL_Delay(10);
+//		HAL_Delay(20);
+//		// Pure Pursuit 대신 임시로 목표속도 고정
+//		pp.set_delta(dv);
+//		float target_v = 0.254f;  // 0.254 m/s 목표
+//
+//		cur_vL = dv.delta_encR / 0.01f;
+//		cur_vR = dv.delta_encR / 0.01f;
+//
+//		pid_outL = pp.update_pid(pp.get_R_error(), target_v, cur_vR);
+//		pid_outR = pp.update_pid(pp.get_R_error(), target_v, cur_vR);
+//
+//		if(pid_outL>=0)
+//		{
+//    	motor.set_duty(TIM_CHANNEL_2, (uint32_t)pid_outL);
+//        motor.set_duty(TIM_CHANNEL_1, 0);
+//		}
+//       else
+//    	{
+//    	 motor.set_duty(TIM_CHANNEL_2, 0);
+//    	 motor.set_duty(TIM_CHANNEL_1, (uint32_t)(-pid_outL));
+//    	}
+//       if(pid_outR>=0)
+//        {
+//    	motor.set_duty(TIM_CHANNEL_4,(uint32_t)pid_outR);
+//        motor.set_duty(TIM_CHANNEL_3, 0);
+//        }
+//       else
+//        {
+//         motor.set_duty(TIM_CHANNEL_4, 0);
+//         motor.set_duty(TIM_CHANNEL_3, (uint32_t)(-pid_outR));
+//        }
 	}
 
 }
@@ -503,7 +558,11 @@ static void MX_GPIO_Init(void) {
 }
 
 /* USER CODE BEGIN 4 */
-
+extern "C" int _write(int file, char *ptr, int len) {
+    // huart2를 통해서 콘솔로 전송 (설정한 디버그용 UART 핸들러 사용)
+    HAL_UART_Transmit(&huart2, (uint8_t *)ptr, len, HAL_MAX_DELAY);
+    return len;
+}
 /* USER CODE END 4 */
 
 /**
@@ -533,4 +592,5 @@ void assert_failed(uint8_t *file, uint32_t line)
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }
+
 #endif /* USE_FULL_ASSERT */

@@ -22,13 +22,12 @@ public:
 
    void test_motor_L();
    void test_motor_R();
-
+   void test_enc();
 private:
 
 uint32_t duty;
 TIM_HandleTypeDef *htim;
 };
-
 
 
 

@@ -47,7 +47,7 @@ public:
 	float get_dist_L(void);
 	float get_dist_R(void);
     float update_pid(PID_error& state,float target,float current);
-
+    void set_pid_gain(float kp,float ki,float kd);
     PID_error& get_L_error();
     PID_error& get_R_error();
 

@@ -9,7 +9,7 @@
 //속도 계산->주행 알고리즘
 
 Pure_pursuit::Pure_pursuit(TIM_HandleTypeDef *htim_encL,TIM_HandleTypeDef *htim_encR,delta_value &dv)
-:L(0.15f),v(0.5f),ld(0.3f),kp(0.0),ki(0.0),kd(0.0)
+:L(0.15f),v(0.5f),ld(0.3f),kp(19.0),ki(37),kd(0.18)
 //L:좌우 바퀴 간격  v:로봇 기본속도(m/s)  ld:lookahead distance
 {
  this->htim_encL=htim_encL;
@@ -73,7 +73,7 @@ float Pure_pursuit::get_dist_L(void)
 {
  uint16_t curr = __HAL_TIM_GET_COUNTER(htim_encL);
  // 엔코더 현재 카운터 값 읽기
- int16_t delta = (uint16_t)(curr - prevL);
+ int16_t delta = (int16_t)(curr - prevL);
  prevL=curr;
  //이번 주기 동안 바퀴가 돈 펄스 수= 현재 엔코더 카운터- 이전 엔코더 카운터
  return ((float)delta/PPR)*(2.0f*M_PI*0.05f);
@@ -84,7 +84,7 @@ float Pure_pursuit::get_dist_L(void)
 float Pure_pursuit::get_dist_R(void)
 {
 	 uint16_t curr = __HAL_TIM_GET_COUNTER(htim_encR);
-	 int16_t delta = (uint16_t)(curr - prevR);
+	 int16_t delta = (int16_t)(curr - prevR);
 	 prevR=curr;
 	 return ((float)delta/PPR)*(2.0f*M_PI*0.05f);
 }
@@ -94,21 +94,21 @@ float Pure_pursuit::get_dist_R(void)
 float Pure_pursuit::update_pid(PID_error & state,float target,float current)
 {
 
-   float dt=0.01f;
+   float dt=0.02f;
    float error=target-current;
    state.error_sum+=error*dt;
 
-   if(state.error_sum>10.0f)state.error_sum=10.0f;
-   else if(state.error_sum<-10.0f)state.error_sum=-10.0f;
+//   if(state.error_sum>10.0f)state.error_sum=10.0f;
+//   else if(state.error_sum<-10.0f)state.error_sum=-10.0f;
 
    float d_error=(error-state.prev_error)/dt;
 
-   float output= Pure_pursuit::kp*error + (Pure_pursuit::ki)*(state.error_sum) + kd*d_error;
+   float output= Pure_pursuit::kp*error*200.0f + (Pure_pursuit::ki)*(state.error_sum)*200.0f + kd*d_error;
    state.prev_error=error;
 
 
-   if (output > 100.0f) output = 100.0f;
-   else if (output < -100.0f) output = -100.0f;
+//   if (output > 100.0f) output = 100.0f;
+//   else if (output < -100.0f) output = -100.0f;
 
    return output;
 }
@@ -131,8 +131,12 @@ PID_error& Pure_pursuit::get_R_error()
 
 }
 
+void Pure_pursuit::set_pid_gain(float kp,float ki,float kd)
+{
 
+this->kp=kp;
+this->ki=ki;
+this->kd=kd;
 
-
-
+}
 
