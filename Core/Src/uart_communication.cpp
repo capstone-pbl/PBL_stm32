@@ -10,7 +10,7 @@
 uart_comm *uart_comm::instance = nullptr;
 
 uart_comm::uart_comm(UART_HandleTypeDef *handler) :
-		cx(0.0), cy(0.0), rx_byte(0), is_ready(false),idx(0)
+cx(0.0), cy(0.0), rx_byte(0), is_ready(false),idx(0)
 {
 	this->huart = handler;
 	instance = this;

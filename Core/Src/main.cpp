@@ -47,6 +47,7 @@
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
+TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart6;
@@ -56,6 +57,7 @@ delta_value dv = { 0 };
 run_motor motor(&htim1, 1200);
 Pure_pursuit pp(&htim3, &htim4, dv);
 uart_comm esp32_uart(&huart6);
+ACT act(&htim2,&huart2,10.0);
 float curx = 0.0f, cury = 0.0f;
 float tx = 1.0f, ty = 0.0f;
 float dt = 0.01f;
@@ -72,6 +74,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_USART6_UART_Init(void);
@@ -115,6 +118,7 @@ int main(void)
 	MX_GPIO_Init();
 	MX_USART2_UART_Init();
 	MX_TIM1_Init();
+    MX_TIM2_Init();
 	MX_TIM3_Init();
 	MX_TIM4_Init();
 	MX_USART6_UART_Init();
@@ -126,6 +130,8 @@ int main(void)
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 	HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
 	HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
+	HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
+	 __HAL_TIM_SET_COUNTER(&htim2, 0);
 
 	esp32_uart.begin_uart();
 	pp.set_pid_gain(19, 37, 0.18);
@@ -140,59 +146,60 @@ int main(void)
 
 	while (1)
 	{
-		HAL_Delay(10);
-
-		if (esp32_uart.get_isready())
-		{
-			esp32_uart.handle_rx();
-			curx = esp32_uart.get_cx();
-			cury = esp32_uart.get_cy();
-
-			esp32_uart.reset_isready();
-		}
-
-		pp.set_delta(dv);
-		pp.Odometry(dv);
-		float dist = sqrtf(
-				(tx - curx) * (tx - curx) + (ty - cury) * (ty - cury));
-		if (dist < 0.1f)
-		{
-			motor.emergency_stop();
-
-		}
-		else {
-
-			float alpha = pp.get_alpha(curx, cury, tx, ty);
-			WheelSpeed ws = pp.calculate(curx, cury, tx, ty, alpha);
-
-			float cur_vL = dv.delta_encL / 0.01f;
-			float cur_vR = dv.delta_encR / 0.01f;
-
-			volatile float pid_outL = pp.update_pid(pp.get_L_error(), ws.left, cur_vL);
-			volatile float pid_outR = pp.update_pid(pp.get_R_error(), ws.right, cur_vR);
-
-			if (pid_outL >= 0)
-			{
-				motor.set_duty(TIM_CHANNEL_1, (uint32_t) (pid_outL));
-				motor.set_duty(TIM_CHANNEL_2, 0);
-			}
-			else
-			{
-				motor.set_duty(TIM_CHANNEL_1, 0);
-				motor.set_duty(TIM_CHANNEL_2, (uint32_t) (-pid_outL));
-			}
-
-			// 오른쪽 모터
-			if (pid_outR >= 0)
-			{
-				motor.set_duty(TIM_CHANNEL_3, (uint32_t) (pid_outR));
-				motor.set_duty(TIM_CHANNEL_4, 0);
-			} else
-			{
-				motor.set_duty(TIM_CHANNEL_3, 0);
-				motor.set_duty(TIM_CHANNEL_4, (uint32_t) (-pid_outR));
-			}
-
+	   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
+	   //act.Lifter_MoveTo(1000);
+	   HAL_Delay(10);
+//
+//		if (esp32_uart.get_isready())
+//		{
+//			esp32_uart.handle_rx();
+//			curx = esp32_uart.get_cx();
+//			cury = esp32_uart.get_cy();
+//
+//			esp32_uart.reset_isready();
+//		}
+//
+//		pp.set_delta(dv);
+//		pp.Odometry(dv);
+//		float dist = sqrtf(
+//				(tx - curx) * (tx - curx) + (ty - cury) * (ty - cury));
+//		if (dist < 0.1f)
+//		{
+//			motor.emergency_stop();
+//
+//		}
+//		else {
+//
+//			float alpha = pp.get_alpha(curx, cury, tx, ty);
+//			WheelSpeed ws = pp.calculate(curx, cury, tx, ty, alpha);
+//
+//			float cur_vL = dv.delta_encL / 0.01f;
+//			float cur_vR = dv.delta_encR / 0.01f;
+//
+//			volatile float pid_outL = pp.update_pid(pp.get_L_error(), ws.left, cur_vL);
+//			volatile float pid_outR = pp.update_pid(pp.get_R_error(), ws.right, cur_vR);
+//
+//			if (pid_outL >= 0)
+//			{
+//				motor.set_duty(TIM_CHANNEL_1, (uint32_t) (pid_outL));
+//				motor.set_duty(TIM_CHANNEL_2, 0);
+//			}
+//			else
+//			{
+//				motor.set_duty(TIM_CHANNEL_1, 0);
+//				motor.set_duty(TIM_CHANNEL_2, (uint32_t) (-pid_outL));
+//			}
+//
+//			// 오른쪽 모터
+//			if (pid_outR >= 0)
+//			{
+//				motor.set_duty(TIM_CHANNEL_3, (uint32_t) (pid_outR));
+//				motor.set_duty(TIM_CHANNEL_4, 0);
+//			} else
+//			{
+//				motor.set_duty(TIM_CHANNEL_3, 0);
+//				motor.set_duty(TIM_CHANNEL_4, (uint32_t) (-pid_outR));
+//			}
 		}
 //		HAL_Delay(20);
 //		// Pure Pursuit 대신 임시로 목표속도 고정
@@ -227,7 +234,7 @@ int main(void)
 //        }
 	}
 
-}
+
 /* USER CODE END WHILE */
 
 /* USER CODE BEGIN 3 */
@@ -352,6 +359,38 @@ static void MX_TIM1_Init(void) {
 
 }
 
+
+static void MX_TIM2_Init(void)
+{
+  TIM_Encoder_InitTypeDef sConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 0;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 41140; // TIM2는 32비트라 넓게 잡음
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI12; // TI1, TI2 둘 다 사용
+  sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC1Filter = 0;
+  sConfig.IC2Polarity = TIM_ICPOLARITY_RISING;
+  sConfig.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+  sConfig.IC2Prescaler = TIM_ICPSC_DIV1;
+  sConfig.IC2Filter = 0;
+  if (HAL_TIM_Encoder_Init(&htim2, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
 /**
  * @brief TIM3 Initialization Function
  * @param None
