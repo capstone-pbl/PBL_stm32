@@ -35,10 +35,10 @@ void ACT::Lifter_Stop(void)
 void ACT::Lifter_MoveTo(float target_mm)
 {
 
-        // ❶ 현재 위치 읽기
+        
         int32_t pos   = (int32_t)__HAL_TIM_GET_COUNTER(htim);
 
-        // ❷ 오차 계산
+        
         float cur_error = target_mm - (float)pos/411.4;
 
 
