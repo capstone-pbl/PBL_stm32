@@ -27,6 +27,11 @@ struct PID_error{
   float error_sum=0.0f,prev_error=0.0f;
 
 };
+struct PID_Const
+{
+ float kp,ki,kd;
+
+};
 
 
 class Pure_pursuit {
@@ -38,6 +43,7 @@ public:
 	void Odometry(delta_value &dv);
 	WheelSpeed calculate(float cx, float cy, float tx, float ty, float alpha);
 
+
 //cx,cy:현재 로봇위치 (UWB가 실시간으로 줌)
 //tx,ty: 목표위치, 앱에서 가라고 명령받는 좌표(미리 정의)
 //alpha: heading 기준 목표까지 상대각(로봇이 바라보는 방향 기준으로 목표가 몇 도에 있는지)
@@ -46,11 +52,14 @@ public:
 	float get_alpha(float cx, float cy, float tx, float ty);
 	float get_dist_L(void);
 	float get_dist_R(void);
-    float update_pid(PID_error& state,float target,float current);
+    float update_pid(PID_error & state, const PID_Const &pid,float target,float current); //state: prev_error, error_sum 구조체, 하위제어기.
+
     void set_pid_gain(float kp,float ki,float kd);
     PID_error& get_L_error();
     PID_error& get_R_error();
-
+    void set_pid_gain_L(const PID_Const& pid);
+    void set_pid_gain_R(const PID_Const&pid);
+	PID_Const L_PID,R_PID;
 private:
 	TIM_HandleTypeDef *htim_encL;
 	TIM_HandleTypeDef *htim_encR;
@@ -78,7 +87,7 @@ private:
 	delta_value dv;
 
 	PID_error L_error,R_error;
-	float kp, ki, kd;
+
 	const float PPR = 26 * 90;
 };
 

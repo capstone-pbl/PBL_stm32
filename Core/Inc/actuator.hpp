@@ -26,7 +26,7 @@ private:
 float COUNTS_PER_MM=411.4f;
 
 
-int DEAD_ZONE = 2;
+int DEAD_ZONE = 1;
 int LOOP_MS = 10;
 
 int32_t prev_error = 0;

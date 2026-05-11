@@ -9,7 +9,7 @@
 //속도 계산->주행 알고리즘
 
 Pure_pursuit::Pure_pursuit(TIM_HandleTypeDef *htim_encL,TIM_HandleTypeDef *htim_encR,delta_value &dv)
-:L(0.15f),v(0.5f),ld(0.3f),kp(19.0),ki(37),kd(0.18)
+:L(0.15f),v(0.5f),ld(0.3f),L_PID({0,0,0}),R_PID({0,0,0})
 //L:좌우 바퀴 간격  v:로봇 기본속도(m/s)  ld:lookahead distance
 {
  this->htim_encL=htim_encL;
@@ -37,7 +37,7 @@ void Pure_pursuit::Odometry(delta_value&dv)
  this-> y += dv.delta_s*sinf(this->theta);// y위치 누적
 }//
 
-WheelSpeed Pure_pursuit::calculate(float cx,float cy,float tx, float ty,float alpha)
+WheelSpeed Pure_pursuit::calculate(float cx,float cy,float tx, float ty,float alpha)//상위제어기: p제어기. 방향을 제어.
 {
 	float actual_ld = std::max(ld, 0.1);
 	// ld가 너무 작으면 0으로 나뉘는 에러 방지
@@ -61,7 +61,7 @@ float Pure_pursuit::get_alpha(float cx,float cy,float tx,float ty)
    while(alpha>M_PI)alpha -=2.0f*M_PI;
    while(alpha< -M_PI)alpha += 2.0f*M_PI;
    return alpha;
-}
+} //오차값을 리턴하는 함수. calculate메서드에서 오차값을 이용한 곱셈/나눗셈을 수행하여 p제어처럼 쓰게됨.
 
 
 
@@ -91,7 +91,7 @@ float Pure_pursuit::get_dist_R(void)
 
 
 
-float Pure_pursuit::update_pid(PID_error & state,float target,float current)
+float Pure_pursuit::update_pid(PID_error & state, const PID_Const &pid,float target,float current) //state: prev_error, error_sum 구조체, 하위제어기.
 {
 
    float dt=0.02f;
@@ -103,7 +103,7 @@ float Pure_pursuit::update_pid(PID_error & state,float target,float current)
 
    float d_error=(error-state.prev_error)/dt;
 
-   float output= Pure_pursuit::kp*error*200.0f + (Pure_pursuit::ki)*(state.error_sum)*200.0f + kd*d_error;
+   float output= pid.kp*error*200.0f + (pid.ki)*(state.error_sum)*200.0f + pid.kd*d_error;
    state.prev_error=error;
 
 
@@ -131,12 +131,17 @@ PID_error& Pure_pursuit::get_R_error()
 
 }
 
-void Pure_pursuit::set_pid_gain(float kp,float ki,float kd)
+void Pure_pursuit::set_pid_gain_L(const PID_Const &pid)
 {
-
-this->kp=kp;
-this->ki=ki;
-this->kd=kd;
+ this->L_PID.kp=pid.kp;
+ this->L_PID.ki=pid.ki;
+ this->L_PID.kd=pid.kd;
 
 }
 
+void Pure_pursuit::set_pid_gain_R(const PID_Const &pid)
+{
+ this->R_PID.kp=pid.kp;
+ this->R_PID.ki=pid.ki;
+ this->R_PID.kd=pid.kd;
+}
