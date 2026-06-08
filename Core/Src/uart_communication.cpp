@@ -7,12 +7,13 @@
 
 #include "uart_communication.hpp"
 #include <cstdio>
+#include <cstring>
 uart_comm *uart_comm::instance = nullptr;
 
 uart_comm::uart_comm(UART_HandleTypeDef *handler) :
-cx(0.0), cy(0.0), rx_byte(0), is_ready(false),idx(0)
+huart(handler),cx(0.0), cy(0.0), rx_byte(0), is_ready(false),idx(0)
 {
-	this->huart = handler;
+	memset(rx_buffer,0,sizeof(rx_buffer));
 	instance = this;
 }
 
@@ -29,7 +30,7 @@ void uart_comm::handle_rx()
     if(rx_byte=='\n')
     {
       rx_buffer[idx-1]='\0';
-      if(sscanf((char*)rx_buffer, "%f,%f",&cx,&cy)==2)
+      if(sscanf((char*)rx_buffer, "%f, %f",&cx,&cy)==2)
       {
        is_ready=true;
       }
@@ -60,9 +61,11 @@ void uart_comm::reset_isready()
 	this->is_ready=false;
 
 }
+extern unsigned volatile long cnt1;
 
 extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
+	cnt1++;
 	if (huart->Instance == USART6)
 	{
 		if (uart_comm::instance != nullptr)

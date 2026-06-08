@@ -8,8 +8,10 @@
 #include <algorithm>
 //속도 계산->주행 알고리즘
 
+
+
 Pure_pursuit::Pure_pursuit(TIM_HandleTypeDef *htim_encL,TIM_HandleTypeDef *htim_encR,delta_value &dv)
-:L(0.15f),v(0.5f),ld(0.3f),L_PID({0,0,0}),R_PID({0,0,0})
+:L_PID({0,0,0}),R_PID({0,0,0}),L(0.39f),ld(0.3f)
 //L:좌우 바퀴 간격  v:로봇 기본속도(m/s)  ld:lookahead distance
 {
  this->htim_encL=htim_encL;
@@ -21,42 +23,36 @@ Pure_pursuit::Pure_pursuit(TIM_HandleTypeDef *htim_encL,TIM_HandleTypeDef *htim_
 
 }
 
-//좌우 이동거리 차이로 로봇이 얼마나 회전했는지 계산
 void Pure_pursuit::set_delta(delta_value&dv)
 {
 	dv.delta_encL = get_dist_L(); //좌 이동거리
 	dv.delta_encR = get_dist_R(); //우 이동거리
-	dv.delta_s     = (dv.delta_encR + dv.delta_encL) / 2.0f; //중심 이동거리
-	dv.delta_theta = (dv.delta_encR - dv.delta_encL) / (float)L;//회전거리
+	dv.delta_s     = (dv.delta_encR + dv.delta_encL) / 2.0f; //차동구동 선속도
+	dv.delta_theta = (dv.delta_encR - dv.delta_encL) / (float)L;//차동구동 회전속도
 	this->dv = dv;
-}
-void Pure_pursuit::Odometry(delta_value&dv)
+	this->theta += dv.delta_theta;
+} // 엔코더 읽어서 이미 일어난 움직임을 계산
+
+void Pure_pursuit::update_theta(delta_value&dv, float cx, float cy)
 {
- this->theta += dv.delta_theta; //heading 누적
- this-> x += dv.delta_s*cosf(this->theta);// x위치 누적
- this-> y += dv.delta_s*sinf(this->theta);// y위치 누적
-}//
-
-WheelSpeed Pure_pursuit::calculate(float cx,float cy,float tx, float ty,float alpha)//상위제어기: p제어기. 방향을 제어.
-{
-	float actual_ld = std::max(ld, 0.1);
-	// ld가 너무 작으면 0으로 나뉘는 에러 방지
-	float kappa = (2.0f * sinf(alpha)) / (float)actual_ld; //곡률 kappa = 2sina/ ld : 얼마나 휘어야 하는지
-	//alpha: 로봇 heading 기준 목표까지 상대각
-	//alpha가 작으면 목표가 정면에 있다는 뜻이므로 조금만 꺾음
-	//alpha가 크면 목표와 각도 차이가 커서 많이 꺾음
-	float omega  = (float)v * kappa;//각속도 w= 선속도*곡률 = v*k;
-	float left_v  = (float)v - omega * ((float)L / 2.0f);
-	float right_v = (float)v + omega * ((float)L / 2.0f);
-
-	return WheelSpeed{left_v, right_v};
-
+        theta = atan2f(prev_cy-cy, cx-prev_cx);
+        prev_cx = cx;
+        prev_cy = cy;
 }
+
+WheelSpeed Pure_pursuit::calculate(float dist, float alpha)
+{
+    float v     = pos_con.kp_pos * dist;
+    float omega = pos_con.kp_ang * alpha;
+    float left_v  = v - omega * (float)L / 2.0f;
+    float right_v = v + omega * (float)L / 2.0f;
+    return WheelSpeed{left_v, right_v};
+} //목표거리와 알파받아서 목표에서 멀면 속도 많이주고 가까우면 속도 느리게 조절해주는 함수
 
 
 float Pure_pursuit::get_alpha(float cx,float cy,float tx,float ty)
 {
-   float alpha = atan2f(ty-cy,tx-cx)-theta;//alpha = atan2f(ty-cy,tx-cx) - theta
+   float alpha = atan2f(cy-ty,tx-cx)-theta;//alpha = atan2f(ty-cy,tx-cx) - theta
 
    while(alpha>M_PI)alpha -=2.0f*M_PI;
    while(alpha< -M_PI)alpha += 2.0f*M_PI;
@@ -91,15 +87,15 @@ float Pure_pursuit::get_dist_R(void)
 
 
 
-float Pure_pursuit::update_pid(PID_error & state, const PID_Const &pid,float target,float current) //state: prev_error, error_sum 구조체, 하위제어기.
+float Pure_pursuit::update_pid(PID_error & state, const vel_PID_Const &pid,float target,float current) //state: prev_error, error_sum 구조체, 하위제어기.
 {
 
    float dt=0.02f;
    float error=target-current;
    state.error_sum+=error*dt;
 
-//   if(state.error_sum>10.0f)state.error_sum=10.0f;
-//   else if(state.error_sum<-10.0f)state.error_sum=-10.0f;
+   if(state.error_sum>0.135f)state.error_sum=0.135f;
+   else if(state.error_sum<-0.135f)state.error_sum=-0.135f;
 
    float d_error=(error-state.prev_error)/dt;
 
@@ -107,8 +103,8 @@ float Pure_pursuit::update_pid(PID_error & state, const PID_Const &pid,float tar
    state.prev_error=error;
 
 
-//   if (output > 100.0f) output = 100.0f;
-//   else if (output < -100.0f) output = -100.0f;
+   if (output > 999.0f) output = 999.0f;
+   else if (output < -999.0f) output = -999.0f;
 
    return output;
 }
@@ -131,7 +127,7 @@ PID_error& Pure_pursuit::get_R_error()
 
 }
 
-void Pure_pursuit::set_pid_gain_L(const PID_Const &pid)
+void Pure_pursuit::set_pid_gain_L(const vel_PID_Const &pid)
 {
  this->L_PID.kp=pid.kp;
  this->L_PID.ki=pid.ki;
@@ -139,9 +135,27 @@ void Pure_pursuit::set_pid_gain_L(const PID_Const &pid)
 
 }
 
-void Pure_pursuit::set_pid_gain_R(const PID_Const &pid)
+void Pure_pursuit::set_pid_gain_R(const vel_PID_Const &pid)
 {
  this->R_PID.kp=pid.kp;
  this->R_PID.ki=pid.ki;
  this->R_PID.kd=pid.kd;
+}
+
+
+float Pure_pursuit::get_theta()
+{
+	return theta;
+}
+
+void Pure_pursuit::set_pos_const(float kp_pos,float kp_ang)
+{
+   this->pos_con.kp_pos=kp_pos;
+   this->pos_con.kp_ang=kp_ang;
+}
+
+void Pure_pursuit::set_prev_pos(float cx, float cy)
+{
+    prev_cx = cx;
+    prev_cy = cy;
 }

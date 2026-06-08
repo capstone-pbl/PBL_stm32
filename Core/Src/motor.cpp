@@ -30,63 +30,64 @@
 
    void run_motor::test_motor_L()
    {
-    HAL_TIM_PWM_Start(this->htim, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(this->htim,TIM_CHANNEL_2);
-    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_1,this->duty);
-    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_2,0); //정방향
 
-    HAL_Delay(1000);
+	   HAL_TIM_PWM_Start(this->htim,TIM_CHANNEL_3);
+	        HAL_TIM_PWM_Start(this->htim,TIM_CHANNEL_4);
 
-    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_1,0);
-    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_2,0);//정지
 
-    HAL_Delay(500);
+	        __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_3,this->duty);
+	        __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_4,0); //정방향
 
-    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_1,0);
-    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_2,this->duty);//역방향
 
-    HAL_Delay(1000);
+	        HAL_Delay(1000);
 
-    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_1,0);
-    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_2,0);//정지
+	        __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_3,0);
+	        __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_4,0);//정지
 
-    HAL_Delay(500);
 
-   HAL_TIM_PWM_Stop(this->htim,TIM_CHANNEL_1);
-   HAL_TIM_PWM_Stop(this->htim,TIM_CHANNEL_2);
+	        HAL_Delay(500);
 
+	        __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_3,0);
+	        __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_4,this->duty); //역방향
+
+	        HAL_Delay(1000);
+
+	        __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_3,0);
+	        __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_4,0);//정지
+
+	        HAL_Delay(500);
+
+	          HAL_TIM_PWM_Stop(this->htim,TIM_CHANNEL_3);
+	          HAL_TIM_PWM_Stop(this->htim,TIM_CHANNEL_4);
    }
 
   void run_motor::test_motor_R()
    {
-	 HAL_TIM_PWM_Start(this->htim,TIM_CHANNEL_3);
-     HAL_TIM_PWM_Start(this->htim,TIM_CHANNEL_4);
+		HAL_TIM_PWM_Start(this->htim, TIM_CHANNEL_1);
+	    HAL_TIM_PWM_Start(this->htim,TIM_CHANNEL_2);
 
+	    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_1,0);
+	    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_2,this->duty);//정방향
 
-     __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_3,this->duty);
-     __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_4,0); //정방향
+	    HAL_Delay(500);
 
+	    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_1,0);
+	    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_2,0);//정지
 
-     HAL_Delay(1000);
+	    HAL_Delay(500);
 
-     __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_3,0);
-     __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_4,0);//정지
+	    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_1,0);
+	    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_2,0);//정지
 
+	    HAL_Delay(500);
 
-     HAL_Delay(500);
+	    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_1,this->duty);
+	    __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_2,0); //역방향
 
-     __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_3,0);
-     __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_4,this->duty); //역방향
+	    HAL_Delay(500);
 
-     HAL_Delay(1000);
-
-     __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_3,0);
-     __HAL_TIM_SET_COMPARE(this->htim, TIM_CHANNEL_4,0);//정지
-
-     HAL_Delay(500);
-
-       HAL_TIM_PWM_Stop(this->htim,TIM_CHANNEL_3);
-       HAL_TIM_PWM_Stop(this->htim,TIM_CHANNEL_4);
+	   HAL_TIM_PWM_Stop(this->htim,TIM_CHANNEL_1);
+	   HAL_TIM_PWM_Stop(this->htim,TIM_CHANNEL_2);
 
    }
 

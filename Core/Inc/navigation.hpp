@@ -27,22 +27,25 @@ struct PID_error{
   float error_sum=0.0f,prev_error=0.0f;
 
 };
-struct PID_Const
+struct vel_PID_Const
 {
  float kp,ki,kd;
-
 };
 
-
+struct pos_const
+{
+  float kp_pos;
+  float kp_ang;
+};
 class Pure_pursuit {
 public:
 	Pure_pursuit(TIM_HandleTypeDef *htim_encL, TIM_HandleTypeDef *htim_encR,
 			delta_value &dv);
 
 	void set_delta(delta_value &dv);
-	void Odometry(delta_value &dv);
-	WheelSpeed calculate(float cx, float cy, float tx, float ty, float alpha);
-
+	void update_theta(delta_value &dv,float cx,float cy);
+	WheelSpeed calculate(float dist, float alpha);
+    float get_theta();
 
 //cx,cy:현재 로봇위치 (UWB가 실시간으로 줌)
 //tx,ty: 목표위치, 앱에서 가라고 명령받는 좌표(미리 정의)
@@ -52,14 +55,20 @@ public:
 	float get_alpha(float cx, float cy, float tx, float ty);
 	float get_dist_L(void);
 	float get_dist_R(void);
-    float update_pid(PID_error & state, const PID_Const &pid,float target,float current); //state: prev_error, error_sum 구조체, 하위제어기.
+    float update_pid(PID_error & state, const vel_PID_Const &pid,float target,float current); //state: prev_error, error_sum 구조체, 하위제어기.
 
-    void set_pid_gain(float kp,float ki,float kd);
+
     PID_error& get_L_error();
     PID_error& get_R_error();
-    void set_pid_gain_L(const PID_Const& pid);
-    void set_pid_gain_R(const PID_Const&pid);
-	PID_Const L_PID,R_PID;
+    void set_pid_gain_L(const vel_PID_Const& pid);
+    void set_pid_gain_R(const vel_PID_Const&pid);
+	vel_PID_Const L_PID,R_PID;
+	void set_pos_const(float kp_pos,float kp_ang);
+	void set_prev_pos(float cx, float cy);
+	float theta = 0.0f;
+	float prev_cx=0.0f,prev_cy=0.0f;
+
+
 private:
 	TIM_HandleTypeDef *htim_encL;
 	TIM_HandleTypeDef *htim_encR;
@@ -81,14 +90,11 @@ private:
 	 ld 큼    ->멀리 보고 걷는 사람 (안정적)
 	 */
 
-	float theta = 0.0f;
-	float x = 0.0f;
-	float y = 0.0f;
-	delta_value dv;
+	delta_value dv{};
 
 	PID_error L_error,R_error;
-
-	const float PPR = 26 * 90;
+    pos_const pos_con{0.1f,1.5f};
+	const float PPR = 26 * 4* 180;
 };
 
 #endif /* INC_NAVIGATION_HPP_ */
