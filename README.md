@@ -45,12 +45,12 @@ Blynk 앱으로 명령을 내리면 UWB 실시간 측위를 기반으로 지정 
 
 | 타이머/핀 | 용도 |
 |-----------|------|
-| TIM1 CH1~4 (PA8~PA11) | 바퀴 PWM 출력 (4채널) |
-| TIM4 CH1~2 (PB6/PB7) | 좌 바퀴 엔코더 |
-| TIM3 CH1~2 (PB4/PB5) | 우 바퀴 엔코더 |
-| TIM2 CH1~2 (PA0/PA1) | 리프트 엔코더 |
+| TIM1 CH1/CH2/CH3/CH4 (PA8/PA9/PA10/PA11) | 바퀴 PWM 출력 (4채널) |
+| TIM4 CH1/CH2 (PB6/PB7) | 좌 바퀴 엔코더 |
+| TIM3 CH1/CH2 (PB4/PB5) | 우 바퀴 엔코더 |
+| TIM2 CH1/CH2 (PA0/PA1) | 리프트 엔코더 |
 | USART6 (PC6/PC7) | ESP32 UART 통신 (9600 bps) |
-| GPIO PC0~3 | 액추에이터 방향 제어 |
+| GPIO PC0/PC1/PC2/PC3 | 액추에이터 방향 제어 |
 
 ## STM32 펌웨어 주요 기능
 
@@ -133,4 +133,4 @@ STM32 → GPIO → 액추에이터 드라이버
 - **STM32 아키텍처 설계**: C++ 클래스 구조 설계, 전체 펌웨어 뼈대 구성
 - **모터 제어** (`motor.hpp/cpp`): PWM duty 제어, TIM1 4채널 설정
 - **UWB UART 연동** (`uart_communication.hpp/cpp`): ESP32-STM32 인터럽트 기반 통신, Singleton 패턴 구현
-- `actuator.hpp/cpp`: 팀원 담당
+-
